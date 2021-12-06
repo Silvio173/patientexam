@@ -1,0 +1,25 @@
+{
+    "firtsName":"Silvio", 
+    "lastName":"Silva",
+    "cpf":"156.829.848-03",
+    "birthday":"08-02-1974", 
+    "phone":"COMMERCIAL",
+    "exam":[
+    	{
+    	  "minemonic":"HEM",
+    	  "name":"HEMOGRAMA"  	
+    	},
+    	{
+    	  "minemonic":"GLI",
+    	  "name":"GLICOSE"  	
+    	},
+      	{
+    	  "minemonic":"URE",
+    	  "name":"UREIA"  	
+    	},
+       	{
+    	  "minemonic":"CRE",
+    	  "name":"CREATININA"  	
+    	}
+    ]
+}

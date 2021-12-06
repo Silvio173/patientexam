@@ -1,0 +1,302 @@
+Spring Boot - API Rest
+Link do Repositório do Projeto: https://github.com/rpeleias/personapi_digital_innovation_one
+
+Projeto é Desenvolver API Rest de um cadastro de pessoas.
+
+Passos para o desenvolvimento. 
+
+1- O que usar na tecnologia --> Java 11, Maven 3.6.3, Spring Boot, Git/GitHub, Heroku. 
+
+2 - Setup do ambiente --> sdkman.io (Get start now -> copiar o comando) $ curl -s "https://get.sdkman.io" | bash
+
+a - sdk version
+b - sdk list java | less 
+c - sdk install java 11.0.6.hs-adpt 
+d - sdk use java 11.0.6.hs-adpt 
+e - sdk list Maven 
+f - sdk install maven 3.6.3 
+g - sdk use maven 
+h - mvn --version
+i - Instalar o IntelliJ (Baixar e instalar)
+j - Git/Hub criar uma conta
+l - Heroku criar uma conta
+
+3 - Criar o projeto no start.spring.io 
+4 - Projeto Maven, java, nome: personapi, jar, adicionar dependencias-> Lombok, devtools, web, jpa, actuator, h2 database, mapstruct.
+
+5 - No IntelliJ - File, Projet Structor, sdk e incluir a versão do skman. 
+
+6 - Criar uma classe: 
+  @RestController
+  @RequestMapping("/api/v1/people")
+  public class PersonController{
+    @GetMapping
+    public String getBook(){
+      return "API Test";
+    }
+  }
+
+7 - Edit configurations perto do botão de executar e selecionar a classe principal de entrada PersonapiAplication. 
+
+8 - Executar o projeto. 
+
+9 - Validar no browser se retorna o "API Rest"
+
+10 - No Heroku -> Criar uma nova aplicação -> Escolher a região EUA -> 
+
+11- Para o Heroku reconhecer o java coloque no arquivo: 
+  system.properties 
+    java.runtime.version=11
+
+12 - Modelo de dados: 
+  Person :   Pk - id, firstName, lastName, cpf, birthDate
+  Phone : pk id, type, number
+
+ 13 - Criar um pacote entity com as classes: 
+  @Entity
+  @Data
+  @Builder
+  @AllArgsConstructor
+  @noArgsConstructor
+  public class Phone{
+    @Id
+    @GeneratedValue(Strategy=GenerationType.IDENTITY)
+    private long id;
+    @EnumeratedValue(EnumType.STRING)
+    @Column(nullable = false)
+    private PhoneType type; 
+    @Column(nullable = false)
+    private String number;
+  }
+  
+  @Getter
+  @AllArgsContructor
+  public enum PhoneType{
+    NOME("Home"),
+    MOBILE("Mobile"),
+    COMMERCIAL("Commercial"); 
+    
+    private final String description;
+  }
+  
+  public class Person{...
+    @Column(nullable = false, unique = true)
+    private String cpf;
+    @OneToMany(fetch = FetchType.LAZY, 
+    cascade = {cascadeType.Persiste, cascadeType.merge,cascadeType.remove})
+    private List<Phone> phones;
+  ...
+  }
+  
+13 - Incluir em aplication.properties as linhas: 
+
+# H2
+spring.h2.console.enabled=true
+spring.h2.console.path=/h2
+
+# Datasource
+spring.datasource.url=jdbc:h2:file:/home/silvio/test
+spring.datasource.username=sa
+spring.datasource.password=
+spring.datasource.driver-class-name=org.h2.Driver
+spring.jpa.hibernate.ddl-auto=update 
+
+E depois rodar a aplicação e verificar no BD - h2-console
+
+14 - Criar as classes que vão servir de DAO (Gerencia BD) vamos usar o SpringDataJpa. Para criar vamos usar o SpringData Jpa. Criar um pacote repository
+
+16 - Criar uma interface 
+  public interface PersonRepository extends JpaRepository<Person, Long>{}
+
+17 - Na classe PersonController:
+  private PersonRepository personRepository;
+  
+17b - No metodo construtor usaro @Autowired
+  @Autowired 
+  public PersonController(PersonRepository personRepository){
+    this.personRepository = personRepository;
+  }
+
+17c - Criar o metodo post na classe controller para criar pessoas. 
+
+  @PostMapping
+  public MessageResponseDTO createPerson(@RequestBody, @Valid Person person){
+    Person savedPerson = personRepository.save(person);
+    return MessageResponseDTO
+    .builder()
+    .message("Created person with ID" + savedPerson.getid())
+    .build();
+  }
+ 
+18 - Criar um pacote dto 
+   @Data
+   @Builder
+   pubic class MessageResponseDTO{
+     private String message;
+   } 
+ 
+19 - Reiniciar a aplicação
+20 - Testar no Postman com Json
+  {
+    "firsName" : "Rodrigo", 
+    "lastName" : "Peleias",
+    "cpf" : "309.399.879.79", 
+    "phones" : [
+      {
+        "type" : "MOBILE",
+        "numer": "(11)999999999"
+      }
+    ]
+  }
+  
+21- Criar uma classe serivce
+  @Service
+  public class PersonService{
+    copiar tudo do controller
+  }
+  
+22 - Refatorar a classe PersonController
+   Incluir private PersonService personService
+   Criar um construtor passando p parametro PesonService
+   Incluir após @Postmapping na linha de baixo  @ResponseStatus(HttpStaus.CREATE)
+   
+23 - git status, git add. , git commit, git push origin master
+
+24 - Testar o heroky
+
+25 - No pacote dto
+  PersonDTO
+  @CPF
+  private String cpf
+  
+  @Valid
+  campo <phones>
+  
+  PhoneDTO 
+  @Enumerated(EnumType.STRING)
+  private PhoneType type;
+  
+  @NotEmpty
+  @Size(min=11, max = 14)
+  private String number;
+  
+26 - MAPSTRUCT (mapstruct.org)
+  Criar as dependencias do maven
+    (codigo aula 8)
+27- Criar o pacote mapper
+  @Mapper
+  public interface PersonMapper{
+    PersonMapper INSTANCE = Mappers.getMapper(PersonMapper.class); 
+    
+    @Mapping(target = "birtDate, source = "birtDate", dataFormat = "dd-MM-yyy")
+    Person toModel(PersonDTO personDTO);
+    PersonDTO toDTO(Person person);
+  }
+
+28 - Na classe PersonRepository
+ private final Personmapper personMapper = PersonMapper.INSTANCE;
+ 
+   No metodo createPerson
+   Person personToSave = personMapper.toModel(personDTO)
+   
+29 - Criar um lista todos no PersonControler
+  @GetMapping
+  public List<PersonDTO> listAll(){
+    return personService.listAll();
+  }
+  
+  @GetMapping("/{id}")
+  public PersonDTO findById(PathVariable,id){
+    return personService.findById(id);
+  
+
+30 - No service
+  public List<PersonDTO> listAll(){
+    List<Person> allPeople = personRepository.findAll();
+    return allPeopple.stream()
+    .map(personMapper::toDTO)
+    .collect(Collectors.toList());
+  }
+  
+  publc PersonDTO findById(Long id){
+    Optional<Persn> optionalperson = personRepository.findById(Id);
+    if(optionPerson,isEmpty()){
+    throw new PersonNotFoundException(id);}  
+  }
+  
+31 - Ao criar a classe PersonNotFoundExcepcion criar o pacote exception
+(Aula parte 9)
+
+32 - fazendo uma melhoria 
+  Person person = personRepository.findById(id)
+  .orElseThrow(( -> new personNotFoundException(id); 
+  return personMapper.toDTI(person);)
+
+33 - Criar a operação deleta
+  @deleteMapping("/{id}")
+  @ResponseStatus 
+  public void deleteById
+
+34 - Criar uma nova brandt no github
+  git checkout -b update_feature
+  git push origin update_feature
+
+35 - Criar o metodo put 
+ @putMapping("/{id}")
+ public MessageResponseDTO updateById(@PathVariable Long id, @RequestBody @Validate PersonDTO personDTO){
+   return personService.updateById(id,personDTO);
+ 
+ }
+ 
+36 - fazer o versionamento com git status, git add, git commit "", git push origin 
+
+37 - Para não precisar colocar o contrutor padrão 
+  @AllArgsConstructor(onConstructor = @__(@Autowired))
+
+38 - Criar um readme.md
+  Na raiz criar um arquivo readme.md
+  
+39 - git status, git add . , git commit -m "", git push origin master
+
+40 - Teste unitario 
+  É complexo pra fazer
+  
+  
+VERSIONAMENTO DO CODIGO EM GIT/GITHUB no IntelliJ
+
+1 - Criar o novo repositorio no Git/GitHub
+2 - VCS -> Enable Version Control Integration -> Escolho GIT
+3 - Commit -> Marca todos -> Clico em Commit and Push
+4 - Defini remote -> Coloca a URL obtida no GitHub. 
+5 - Fazer login no GitHub. 
+6 - Autoriza no GitHub
+7 - coloca a senha no site do github
+
+{
+    "firtsName":"Silvio", 
+    "lastName":"Silva",
+    "cpf":"309.399.879.79",
+    "aniversario":"08-07-1974", 
+    "phone":"MOBILE",
+    "exam":[
+    	{
+    	  "minemonic":"HEM",
+    	  "name":"HEMOGRAMA"  	
+    	}
+    	{
+    	  "minemonic":"GLI",
+    	  "name":"GLICOSE"  	
+    	}
+      	{
+    	  "minemonic":"URE",
+    	  "name":"UREIA"  	
+    	}
+       	{
+    	  "minemonic":"CRE",
+    	  "name":"CREATININA"  	
+    	}
+  
+  
+     ]
+}
+

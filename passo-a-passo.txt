@@ -1,0 +1,10 @@
+Entrar no site sdkman.io 
+curl -s "https://get.sdkman.io" | bash
+sdk -version
+sdk list java | less
+sdk install java 11.0.6.hsadpt 
+sdk use java 11.0.6.hsadpt
+sdk install mave 3.6.3
+sdk use mave 3.6.3
+mvn version
+
